@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laniakea Vault</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🗂️ Laniakea Vault</h1>
+      <div class="stats">
+        <span id="total-data">0 датумов</span>
+        <span id="total-themes">0 тем</span>
+      </div>
+    </header>
+
+    <nav>
+      <button class="active" data-view="grid">📊 Все датумы</button>
+      <button data-view="themes">🏷️ Темы</button>
+      <button data-view="add">➕ Добавить</button>
+    </nav>
+
+    <main>
+      <!-- Grid View -->
+      <div id="grid-view" class="view active">
+        <div class="filters">
+          <input type="text" id="search" placeholder="Поиск...">
+          <select id="filter-type">
+            <option value="">Все типы</option>
+            <option value="image">Изображения</option>
+            <option value="text">Текст</option>
+            <option value="video">Видео</option>
+          </select>
+        </div>
+        <div id="data-grid" class="grid"></div>
+      </div>
+
+      <!-- Themes View -->
+      <div id="themes-view" class="view">
+        <div id="themes-list"></div>
+      </div>
+
+      <!-- Add View -->
+      <div id="add-view" class="view">
+        <form id="add-form">
+          <h2>Добавить датум</h2>
+          <p>Используй Telegram-бот для быстрого добавления</p>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal для просмотра датума -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

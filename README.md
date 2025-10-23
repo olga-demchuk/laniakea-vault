@@ -44,13 +44,13 @@ cp .env.example .env
 
 **Получить TELEGRAM_BOT_TOKEN:**
    - Открой Telegram
-   - Найди @BotFather
+   - Открой [t.me/BotFather](https://t.me/BotFather)
    - Отправь `/newbot`
    - Придумай название и username бота
    - Скопируй токен, вставь в `.env`
 
 **Получить ALLOWED_USER_ID:**
-   - Найди в Telegram @userinfobot
+   - Открой [t.me/userinfobot](https://t.me/userinfobot)
    - Отправь ему `/start`
    - Скопируй свой ID, вставь в `.env`
 

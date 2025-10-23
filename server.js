@@ -128,24 +128,24 @@ bot.on('photo', async (msg) => {
   const photo = msg.photo[msg.photo.length - 1];
   const caption = msg.caption || 'Без описания';
   const hashtags = extractHashtags(caption);
-  
   try {
     const file = await bot.getFile(photo.file_id);
     const fileName = `img_${Date.now()}.jpg`;
     const filePath = path.join('media/images', fileName);
     
-    await bot.downloadFile(file.file_id, 'media/images');
+    // Download and rename
+    const downloadPath = await bot.downloadFile(file.file_id, 'media/images');
+    fs.renameSync(downloadPath, filePath);
     
     db.run(
       'INSERT INTO data (type, file_path, note) VALUES (?, ?, ?)',
-      ['image', filePath, caption],
+      ['image', `images/${fileName}`, caption],
       function(err) {
         if (err) {
           bot.sendMessage(chatId, '❌ Ошибка сохранения в БД');
           console.error(err);
         } else {
           const dataId = this.lastID;
-          
           saveThemes(dataId, hashtags, () => {
             const themesText = hashtags.length > 0 ? `\n🏷️ Темы: ${hashtags.join(', ')}` : '';
             bot.sendMessage(chatId, `✅ Сохранено!\n\n📷 ID: ${dataId}\n📝 ${caption}${themesText}`);
@@ -338,5 +338,94 @@ process.on('SIGINT', () => {
   db.close();
   bot.stopPolling();
   console.log('\n👋 Бот остановлен');
+  process.exit(0);
+});
+
+// ========================================
+// Web Server
+// ========================================
+
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+app.use('/media', express.static('media'));
+
+// API: Get all data with themes
+app.get('/api/data', (req, res) => {
+  db.all(
+    `SELECT 
+      d.id, d.type, d.file_path, d.content, d.note, d.created_at,
+      GROUP_CONCAT(t.name, ', ') as themes
+    FROM data d
+    LEFT JOIN data_themes dt ON d.id = dt.data_id
+    LEFT JOIN themes t ON dt.theme_id = t.id
+    GROUP BY d.id
+    ORDER BY d.created_at DESC`,
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json(rows);
+    }
+  );
+});
+
+// API: Get all themes with count
+app.get('/api/themes', (req, res) => {
+  db.all(
+    `SELECT 
+      t.id, t.name,
+      COUNT(dt.data_id) as count
+    FROM themes t
+    LEFT JOIN data_themes dt ON t.id = dt.theme_id
+    GROUP BY t.id
+    ORDER BY count DESC, t.name ASC`,
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json(rows);
+    }
+  );
+});
+
+// API: Get stats
+app.get('/api/stats', (req, res) => {
+  db.get('SELECT COUNT(*) as total FROM data', [], (err, dataRow) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error' });
+    }
+    db.get('SELECT COUNT(*) as total FROM themes', [], (err, themeRow) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json({
+        totalData: dataRow.total,
+        totalThemes: themeRow.total
+      });
+    });
+  });
+
+});
+
+// Start web server
+app.listen(PORT, () => {
+  console.log(`🌐 Web interface: http://localhost:${PORT}`);
+});
+
+
+process.on('SIGINT', () => {
+  db.close();
+  bot.stopPolling();
+  console.log('\n👋 Бот и сервер остановлены');
   process.exit(0);
 });

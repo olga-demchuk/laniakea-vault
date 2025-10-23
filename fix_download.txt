@@ -1,0 +1,30 @@
+  const hashtags = extractHashtags(caption);
+  try {
+    const file = await bot.getFile(photo.file_id);
+    const fileName = `img_${Date.now()}.jpg`;
+    const filePath = path.join('media/images', fileName);
+    
+    // Download and rename
+    const downloadPath = await bot.downloadFile(file.file_id, 'media/images');
+    fs.renameSync(downloadPath, filePath);
+    
+    db.run(
+      'INSERT INTO data (type, file_path, note) VALUES (?, ?, ?)',
+      ['image', `images/${fileName}`, caption],
+      function(err) {
+        if (err) {
+          bot.sendMessage(chatId, '❌ Ошибка сохранения в БД');
+          console.error(err);
+        } else {
+          const dataId = this.lastID;
+          saveThemes(dataId, hashtags, () => {
+            const themesText = hashtags.length > 0 ? `\n🏷️ Темы: ${hashtags.join(', ')}` : '';
+            bot.sendMessage(chatId, `✅ Сохранено!\n\n📷 ID: ${dataId}\n📝 ${caption}${themesText}`);
+          });
+        }
+      }
+    );
+  } catch (err) {
+    bot.sendMessage(chatId, '❌ Ошибка загрузки фото');
+    console.error(err);
+  }

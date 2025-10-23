@@ -41,8 +41,18 @@ cp .env.example .env
 ```
 
 4. Заполнить `.env` своими данными:
-   - `TELEGRAM_BOT_TOKEN` — токен от @BotFather
-   - `ALLOWED_USER_ID` — твой Telegram User ID
+
+**Получить TELEGRAM_BOT_TOKEN:**
+   - Открой Telegram
+   - Найди @BotFather
+   - Отправь `/newbot`
+   - Придумай название и username бота
+   - Скопируй токен, вставь в `.env`
+
+**Получить ALLOWED_USER_ID:**
+   - Найди в Telegram @userinfobot
+   - Отправь ему `/start`
+   - Скопируй свой ID, вставь в `.env`
 
 5. Запустить
 ```bash

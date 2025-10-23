@@ -169,6 +169,9 @@ function showDatum(id) {
     <div class="modal-meta">
       ${icon} ${datum.type} • ID: ${datum.id} • ${date}
     </div>
+    <div style="margin-top: 20px; display: flex; gap: 10px;">
+      <button onclick="editDatum(${datum.id})" style="flex: 1; padding: 10px; background: #000; color: #fff; border: none; border-radius: 8px; cursor: pointer;">✏️ Редактировать</button>
+    </div>
   `;
   
   modal.classList.add('active');
@@ -217,4 +220,88 @@ function applyFilters() {
   }
   
   renderDataGrid(filtered);
+}
+
+// Edit datum
+function editDatum(id) {
+  const datum = allData.find(d => d.id == id);
+  if (!datum) return;
+  
+  const modal = document.getElementById('modal');
+  const body = document.getElementById('modal-body');
+  
+  const themes = datum.themes ? datum.themes.split(', ') : [];
+  const themesInput = themes.map(t => `#${t}`).join(' ');
+  
+  body.innerHTML = `
+    <h2>Редактировать датум #${id}</h2>
+    <form id="edit-form">
+      <label>Описание:</label>
+      <textarea id="edit-note" rows="4" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;">${datum.note || ''}</textarea>
+      
+      <label>Темы (через пробел с #):</label>
+      <input type="text" id="edit-themes" value="${themesInput}" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px;">
+      
+      <div style="display: flex; gap: 10px;">
+        <button type="submit" style="flex: 1; padding: 10px; background: #000; color: #fff; border: none; border-radius: 8px; cursor: pointer;">Сохранить</button>
+        <button type="button" onclick="deleteDatum(${id})" style="flex: 1; padding: 10px; background: #dc3545; color: #fff; border: none; border-radius: 8px; cursor: pointer;">Удалить</button>
+        <button type="button" onclick="document.getElementById('modal').classList.remove('active')" style="padding: 10px 20px; background: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer;">Отмена</button>
+      </div>
+    </form>
+  `;
+  
+  modal.classList.add('active');
+  
+  document.getElementById('edit-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveDatum(id);
+  });
+}
+
+async function saveDatum(id) {
+  const note = document.getElementById('edit-note').value;
+  const themesText = document.getElementById('edit-themes').value;
+  const themes = themesText.match(/#[а-яА-ЯёЁa-zA-Z0-9_]+/g)?.map(t => t.substring(1).toLowerCase()) || [];
+  
+  try {
+    const res = await fetch(`/api/data/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note, themes })
+    });
+    
+    if (res.ok) {
+      alert('✅ Сохранено!');
+      document.getElementById('modal').classList.remove('active');
+      await loadData();
+      await loadThemes();
+      await loadStats();
+    } else {
+      alert('❌ Ошибка сохранения');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('❌ Ошибка сохранения');
+  }
+}
+
+async function deleteDatum(id) {
+  if (!confirm('Точно удалить?')) return;
+  
+  try {
+    const res = await fetch(`/api/data/${id}`, { method: 'DELETE' });
+    
+    if (res.ok) {
+      alert('✅ Удалено!');
+      document.getElementById('modal').classList.remove('active');
+      await loadData();
+      await loadThemes();
+      await loadStats();
+    } else {
+      alert('❌ Ошибка удаления');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('❌ Ошибка удаления');
+  }
 }

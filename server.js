@@ -128,6 +128,7 @@ bot.on('photo', async (msg) => {
   const photo = msg.photo[msg.photo.length - 1];
   const caption = msg.caption || 'Без описания';
   const hashtags = extractHashtags(caption);
+  
   try {
     const file = await bot.getFile(photo.file_id);
     const fileName = `img_${Date.now()}.jpg`;
@@ -334,13 +335,6 @@ bot.on('polling_error', (error) => {
   console.error('Polling error:', error);
 });
 
-process.on('SIGINT', () => {
-  db.close();
-  bot.stopPolling();
-  console.log('\n👋 Бот остановлен');
-  process.exit(0);
-});
-
 // ========================================
 // Web Server
 // ========================================
@@ -414,14 +408,81 @@ app.get('/api/stats', (req, res) => {
       });
     });
   });
+});
 
+// API: Update datum
+app.put('/api/data/:id', (req, res) => {
+  const { id } = req.params;
+  const { note, themes } = req.body;
+  
+  db.run(
+    'UPDATE data SET note = ? WHERE id = ?',
+    [note, id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Database error' });
+      }
+      
+      // Update themes
+      db.run('DELETE FROM data_themes WHERE data_id = ?', [id], () => {
+        if (themes && themes.length > 0) {
+          let processed = 0;
+          themes.forEach(themeName => {
+            db.run('INSERT OR IGNORE INTO themes (name) VALUES (?)', [themeName], () => {
+              db.get('SELECT id FROM themes WHERE name = ?', [themeName], (err, row) => {
+                if (row) {
+                  db.run('INSERT INTO data_themes (data_id, theme_id) VALUES (?, ?)', [id, row.id], () => {
+                    processed++;
+                    if (processed === themes.length) {
+                      res.json({ success: true });
+                    }
+                  });
+                }
+              });
+            });
+          });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    }
+  );
+});
+
+// API: Delete datum
+app.delete('/api/data/:id', (req, res) => {
+  const { id } = req.params;
+  
+  // Get file path first
+  db.get('SELECT file_path FROM data WHERE id = ?', [id], (err, row) => {
+    if (err || !row) {
+      return res.status(500).json({ error: 'Database error' });
+    }
+    
+    // Delete file if exists
+    if (row.file_path) {
+      const fullPath = path.join(__dirname, 'media', row.file_path);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    }
+    
+    // Delete from database
+    db.run('DELETE FROM data_themes WHERE data_id = ?', [id], () => {
+      db.run('DELETE FROM data WHERE id = ?', [id], (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ success: true });
+      });
+    });
+  });
 });
 
 // Start web server
 app.listen(PORT, () => {
   console.log(`🌐 Web interface: http://localhost:${PORT}`);
 });
-
 
 process.on('SIGINT', () => {
   db.close();

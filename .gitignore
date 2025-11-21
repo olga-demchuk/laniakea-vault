@@ -5,3 +5,4 @@ media/
 backups/
 *.log
 .DS_Store
+*.backup

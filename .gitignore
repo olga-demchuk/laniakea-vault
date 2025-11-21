@@ -1,0 +1,8 @@
+node_modules/
+.env
+vault.db
+media/
+backups/
+*.log
+.DS_Store
+data/

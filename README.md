@@ -1,8 +1,9 @@
 # Laniakea Vault
 
-Personal knowledge base with wiki-style linking. Markdown + JSON storage + SPA.
+Personal knowledge base for systematic world exploration. Topics: cosmetics, nutrition, psychology, ergonomics + fundamental sciences (biology, physics, chemistry).
 
-**Philosophy:** Knowledge management system for cosmetics, nutrition, psychology, ergonomics. Focus on habits, order, and common sense.
+**Architecture:** SPA (vanilla JS) + Express API + JSON storage  
+**Key feature:** Wiki-links `[[Page]]` with automatic backlinks
 
 ## Quick Start
 
@@ -12,94 +13,100 @@ npm start
 # → http://localhost:3000
 ```
 
-## Features
+## Core Concepts
 
-- Wiki-links: `[[Page Name]]` or `[[Page Name|alt text]]`
-- Markdown with live preview
-- Tags: `#tag1 #tag2`
-- Automatic backlinks
-- Live search
-- Git-versioned content
+**Wiki-links:** `[[Page Name]]` or `[[Page|alt text]]`  
+- Blue = page exists
+- Red = can be created on click
+- Parsed on backend, rendered on frontend
+
+**Tags:** `#cosmetics #acids` — extracted automatically
+
+**Backlinks:** All incoming links displayed at bottom of page
+
+**Knowledge graph:** Connections via `links.json`, visualization planned
 
 ## Stack
 
-**Backend:** Node.js + Express + JSON storage  
-**Frontend:** Vanilla JS (SPA) + Marked.js  
-**Data:** `data/*.json` (pages, tags, links)
+- Node.js 18+ / Express 4
+- JSON storage (SQLite migration at >1000 pages)
+- Marked.js for Markdown
+- History API for SPA routing
 
 ## API
 
 ```
-GET    /api/pages
-GET    /api/pages/:slug
-POST   /api/pages
-PUT    /api/pages/:id
-DELETE /api/pages/:id
-GET    /api/tags
-GET    /api/tags/:name/pages
-GET    /api/search?q=query
+GET    /api/pages              # All pages
+GET    /api/pages/:slug        # Single page
+POST   /api/pages              # Create
+PUT    /api/pages/:id          # Update
+DELETE /api/pages/:id          # Delete
+GET    /api/tags               # All tags + count
+GET    /api/search?q=query     # Live search
 ```
 
 ## Data Model
 
-**pages.json:**
 ```json
+// pages.json
 {
   "id": 1,
-  "title": "Page Title",
-  "slug": "page-slug",
-  "content_md": "Markdown with [[wiki-links]]",
-  "created_at": "ISO timestamp",
-  "updated_at": "ISO timestamp"
+  "title": "Glycolic Acid",
+  "slug": "glycolic-acid",
+  "content_md": "Markdown with [[AHA Acids|AHA]]",
+  "created_at": "ISO",
+  "updated_at": "ISO"
 }
-```
 
-**links.json:**
-```json
+// links.json
 {
   "page_id": 1,
   "linked_page_id": 2,
-  "link_type": "inline" // or "related"
+  "link_type": "inline"  // or "related"
+}
+
+// tags.json
+{
+  "page_id": 1,
+  "name": "cosmetics"
 }
 ```
 
 ## Structure
 
 ```
-laniakea-vault/
-├── data/              # JSON storage (git-tracked)
+├── data/              # Git-tracked JSON
 │   ├── pages.json
 │   ├── tags.json
 │   └── links.json
 ├── public/
-│   ├── js/app.js      # SPA routing, wiki-link processing
+│   ├── js/app.js      # SPA + wiki-link rendering
 │   └── css/style.css
-├── server.js          # Express + API
-└── PROJECT-CONTEXT.md # Full docs
+├── server.js          # Express + API + parsers
+└── PROJECT-CONTEXT.md # Full documentation
 ```
 
 ## Key Functions
 
 **Backend (`server.js`):**
-- `extractWikiLinks(content)` — parse `[[]]` syntax
-- `extractTags(content)` — parse `#tag` syntax
-- `generateSlug(title)` — transliterate to English slug
+```javascript
+extractWikiLinks(content)  // [[Page]] → Array<{title, alias}>
+extractTags(content)       // #tag → Array<string>
+generateSlug(title)        // "Привет" → "privet"
+```
 
 **Frontend (`app.js`):**
-- `processWikiLinks()` — render blue (exists) / red (missing) links
-- SPA routing via History API
+```javascript
+processWikiLinks()         // Red/blue links
+renderBacklinks()          // Backlinks display
+```
 
-## Notes
+## Dev Notes
 
-- JSON storage → migrate to SQLite when >1000 pages
-- Wiki-links parsed on save (backend) and render (frontend)
-- Backlinks computed from `links.json`
-- All content git-versioned
-
-## Docs
-
-- `PROJECT-CONTEXT.md` — full project context
-- `CHEATSHEET.md` — usage examples
+- Slugs generated via transliteration (cyrillic-to-translit-js)
+- Wiki-links parsed on save, not render (for backlinks)
+- Live preview with 300ms debounce
+- SPA without page reloads
 
 ## License
 

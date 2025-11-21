@@ -1,94 +1,105 @@
-# Laniakea Vault — Personal Knowledge Base
+# Laniakea Vault
 
-Личная локальная википедия для долгосрочного накопления знаний.
+Personal knowledge base with wiki-style linking. Markdown + JSON storage + SPA.
 
-## Быстрый старт
+**Philosophy:** Knowledge management system for cosmetics, nutrition, psychology, ergonomics. Focus on habits, order, and common sense.
+
+## Quick Start
 
 ```bash
-# 1. Установить зависимости
 npm install
-
-# 2. Запустить сервер
 npm start
-
-# 3. Открыть в браузере
-http://localhost:3000
+# → http://localhost:3000
 ```
 
-## Возможности MVP
+## Features
 
-✅ Создание страниц с Markdown  
-✅ Вики-ссылки `[[Название страницы]]`  
-✅ Теги `#тег1 #тег2`  
-✅ Related pages (связанные статьи)  
-✅ Обратные ссылки (backlinks)  
-✅ Поиск по названию и содержимому  
-✅ Live preview при редактировании  
+- Wiki-links: `[[Page Name]]` or `[[Page Name|alt text]]`
+- Markdown with live preview
+- Tags: `#tag1 #tag2`
+- Automatic backlinks
+- Live search
+- Git-versioned content
 
-## Структура
+## Stack
+
+**Backend:** Node.js + Express + JSON storage  
+**Frontend:** Vanilla JS (SPA) + Marked.js  
+**Data:** `data/*.json` (pages, tags, links)
+
+## API
+
+```
+GET    /api/pages
+GET    /api/pages/:slug
+POST   /api/pages
+PUT    /api/pages/:id
+DELETE /api/pages/:id
+GET    /api/tags
+GET    /api/tags/:name/pages
+GET    /api/search?q=query
+```
+
+## Data Model
+
+**pages.json:**
+```json
+{
+  "id": 1,
+  "title": "Page Title",
+  "slug": "page-slug",
+  "content_md": "Markdown with [[wiki-links]]",
+  "created_at": "ISO timestamp",
+  "updated_at": "ISO timestamp"
+}
+```
+
+**links.json:**
+```json
+{
+  "page_id": 1,
+  "linked_page_id": 2,
+  "link_type": "inline" // or "related"
+}
+```
+
+## Structure
 
 ```
 laniakea-vault/
-├── data/              # JSON хранилище (pages, tags, links)
-├── media/images/      # Загруженные изображения
-├── public/            # Frontend (HTML, CSS, JS)
-├── server.js          # Backend (Express API)
-└── package.json
+├── data/              # JSON storage (git-tracked)
+│   ├── pages.json
+│   ├── tags.json
+│   └── links.json
+├── public/
+│   ├── js/app.js      # SPA routing, wiki-link processing
+│   └── css/style.css
+├── server.js          # Express + API
+└── PROJECT-CONTEXT.md # Full docs
 ```
 
-## Использование
+## Key Functions
 
-### Создание страницы
+**Backend (`server.js`):**
+- `extractWikiLinks(content)` — parse `[[]]` syntax
+- `extractTags(content)` — parse `#tag` syntax
+- `generateSlug(title)` — transliterate to English slug
 
-1. Нажать "Новая страница"
-2. Ввести название
-3. Написать содержимое в Markdown
-4. Добавить теги (через запятую)
-5. Сохранить
+**Frontend (`app.js`):**
+- `processWikiLinks()` — render blue (exists) / red (missing) links
+- SPA routing via History API
 
-### Вики-ссылки
+## Notes
 
-В тексте используйте `[[Название страницы]]` для ссылок на другие страницы.
+- JSON storage → migrate to SQLite when >1000 pages
+- Wiki-links parsed on save (backend) and render (frontend)
+- Backlinks computed from `links.json`
+- All content git-versioned
 
-Примеры:
-- `[[Гликолевая кислота]]` — обычная ссылка
-- `[[Гликолевая кислота|гликолевую]]` — ссылка с альтернативным текстом
+## Docs
 
-Синие ссылки — страница существует  
-Красные ссылки — страница не существует (можно создать)
-
-### Теги
-
-Теги можно добавлять двумя способами:
-1. В поле "Теги" (через запятую)
-2. В тексте через хештеги: `#косметология #кислоты`
-
-### Поиск
-
-Начните вводить в поле поиска — результаты обновятся автоматически.
-
-## Roadmap
-
-**Этап 2:** Галереи + External links (WB, Amazon)  
-**Этап 3:** Парсинг Wildberries  
-**Этап 4:** Telegram-бот  
-**Этап 5:** Video pages  
-**Этап 6:** Расширенные галереи  
-
-## Технологии
-
-- Node.js + Express
-- JSON хранилище (легко мигрировать на SQLite)
-- Vanilla JavaScript
-- Marked.js (Markdown parser)
-
-## Документация
-
-См. папку `laniakea-vault-docs/`:
-- `CONTEXT.md` — контекст для разработки
-- `API.md` — спецификация API
-- `DATABASE.md` — схема БД
-- `DEVELOPMENT.md` — гайд по разработке
+- `PROJECT-CONTEXT.md` — full project context
+- `CHEATSHEET.md` — usage examples
 
 ## License
 

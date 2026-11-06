@@ -83,5 +83,15 @@
     "page_id": 9,
     "linked_page_id": 6,
     "link_type": "inline"
+  },
+  {
+    "page_id": 10,
+    "linked_page_id": 5,
+    "link_type": "inline"
+  },
+  {
+    "page_id": 10,
+    "linked_page_id": 9,
+    "link_type": "inline"
   }
 ]
